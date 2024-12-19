@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Livepixels - draw together.</title>
+  </head>
+  <body
+    class="relative flex flex-col justify-start items-center w-screen h-screen antialiased"
+  >
+    <header class="py-4">
+      <h1 class="text-4xl font-semibold text-center">
+        click to draw. <br />
+        the screen is your canvas.
+      </h1>
+    </header>
+    <main>
+      <canvas
+        id="pixel-canvas"
+        class="absolute left-0 top-0 w-full h-full"
+      ></canvas>
+    </main>
+    <footer></footer>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
