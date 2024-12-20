@@ -1,4 +1,5 @@
 import "./style.css";
 import { setupGLCanvas } from "./gl-canvas";
 
-setupGLCanvas();
+const socket = new WebSocket("ws://localhost:3000");
+setupGLCanvas(socket);
