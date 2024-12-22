@@ -26,16 +26,19 @@ wss.on("connection", async (ws) => {
         const height = data.height;
 
         const texture = await getViewportTexture(redis, width, height);
-        ws.send(texture);
+        ws.send(
+          JSON.stringify({ type: "texture", texture: Array.from(texture) })
+        );
 
         console.log("Texture data sent!");
         break;
-      case "pixels":
-        console.log("Texture data received!");
+      case "delta":
+        console.log("Texture delta data received!");
 
+        console.log(data.delta);
         wss.clients.forEach((client) => {
           if (client !== ws && client.readyState === WebSocket.OPEN) {
-            client.send(data);
+            client.send(JSON.stringify(data));
           }
         });
 
