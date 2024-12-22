@@ -1,30 +1,50 @@
 import WebSocket, { WebSocketServer } from "ws";
 import { createClient } from "redis";
+import { createTexture, getViewportTexture } from "./texture.js";
 
-const redis = createClient();
+const redis = createClient({});
+redis.on("connect", () => console.log("Redis connected!"));
 redis.on("error", (err) => {
-  console.error(err);
+  throw new Error(err);
 });
 await redis.connect();
+await createTexture(redis);
 
 const wss = new WebSocketServer({ port: 3000 });
 wss.on("connection", async (ws) => {
-  console.log("connected");
+  console.log("A new client connected!");
   console.log(`Total connected clients: ${wss.clients.size}`);
-  ws.on("message", async (message) => {
-    await redis.set("texture", message);
-    console.log("received message");
-    wss.clients.forEach((client) => {
-      if (client !== ws && client.readyState === WebSocket.OPEN) {
-        client.send(message);
-        console.log("sent message");
-      }
-    });
-  });
 
-  redis.get("texture", (err, reply) => {
-    if (reply) {
-      ws.send(reply);
+  ws.on("message", async (message) => {
+    const data = JSON.parse(message);
+
+    switch (data.type) {
+      case "screen":
+        console.log("Screen data received!");
+
+        const width = data.width;
+        const height = data.height;
+
+        const texture = await getViewportTexture(redis, width, height);
+        ws.send(texture);
+
+        console.log("Texture data sent!");
+        break;
+      case "pixels":
+        console.log("Texture data received!");
+
+        wss.clients.forEach((client) => {
+          if (client !== ws && client.readyState === WebSocket.OPEN) {
+            client.send(data);
+          }
+        });
+
+        break;
+      default:
+        console.log("Unknown message type received!");
+        break;
     }
   });
 });
+
+console.log("Server started!");

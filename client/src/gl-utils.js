@@ -130,7 +130,34 @@ export const getMousePosition = (event, canvas) => {
   const y = (event.clientY - rect.top) * scaleY;
 
   const textureX = x / canvas.width;
-  const textureY = 1 - y / canvas.height; // TODO: Understand what this does.
+  const textureY = 1 - y / canvas.height;
 
   return { x: textureX, y: textureY };
+};
+
+export const getTextureData = (canvas, ctx, texture) => {
+  const frame = ctx.createFramebuffer();
+  ctx.bindFramebuffer(ctx.FRAMEBUFFER, frame);
+  ctx.framebufferTexture2D(
+    ctx.FRAMEBUFFER,
+    ctx.COLOR_ATTACHMENT0,
+    ctx.TEXTURE_2D,
+    texture,
+    0
+  );
+
+  const data = new Uint8Array(canvas.width * canvas.height * 4);
+  ctx.readPixels(
+    0,
+    0,
+    canvas.width,
+    canvas.height,
+    ctx.RGBA,
+    ctx.UNSIGNED_BYTE,
+    data
+  );
+  ctx.bindFramebuffer(ctx.FRAMEBUFFER, null);
+  ctx.deleteFramebuffer(frame);
+
+  return data;
 };
