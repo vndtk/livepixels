@@ -1,6 +1,6 @@
 import WebSocket, { WebSocketServer } from "ws";
 import { createClient } from "redis";
-import { createTexture, getViewportTexture } from "./texture.js";
+import { createTexture, getViewportTexture, getChunk } from "./texture.js";
 
 const redis = createClient({});
 redis.on("connect", () => console.log("Redis connected!"));
@@ -9,6 +9,8 @@ redis.on("error", (err) => {
 });
 await redis.connect();
 await createTexture(redis);
+
+let chunksToUpdate = [];
 
 const wss = new WebSocketServer({ port: 3000 });
 wss.on("connection", async (ws) => {
@@ -40,6 +42,21 @@ wss.on("connection", async (ws) => {
           if (client !== ws && client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify(data));
           }
+        });
+
+        // update chunks
+        data.delta.forEach(async ({ x, y, color }) => {
+          const chunkIndex = Math.floor((y * TEXTURE_WIDTH + x) / CHUNK_SIZE);
+          const chunk = await getChunk(redis, chunkIndex);
+
+          const chunkX = x % CHUNK_WIDTH;
+          const chunkY = y % CHUNK_HEIGHT;
+
+          const offset = 4 * (chunkY * CHUNK_WIDTH + chunkX);
+          chunk.set(color, offset);
+
+          const time = new Date().getTime();
+          chunksToUpdate.push({ index: chunkIndex, chunk, time });
         });
 
         break;
